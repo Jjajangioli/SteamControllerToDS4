@@ -43,6 +43,9 @@ Pressing only the left grip will toggle the left trackpad only. The left trackpa
 
 Pressing both grips simultaneously will toggle both trackpads to be used at once. This is useful for trackpad commands which require input with two fingers. In this mode, each trackpad will span only half of the Dualshock 4 trackpad. 
 
+## Download ##
+[Download](https://github.com/Jjajangioli/SteamControllerToDS4/releases)
+
 ---
 
 ## Contact ##
