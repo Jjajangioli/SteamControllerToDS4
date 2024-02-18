@@ -1,6 +1,3 @@
-// ConsoleApplication1.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <iostream>
@@ -46,8 +43,30 @@ void ds4Update(steam_controller::update_event& update, const PVIGEM_CLIENT clien
     report.Report.bTriggerL = update.left_trigger;
     report.Report.bTriggerR = update.right_trigger;
     if (!(update.buttons & static_cast<int>(steam_controller::Button::RG))) {
-        report.Report.bThumbRX = update.right_axis.x / 256 + 127; // Steam stores touchpad input on a signed 32bit integer, which must be converted to an unsigned byte. 
-        report.Report.bThumbRY = -(update.right_axis.y) / 256 + 127; // Steam and PS4 y-axes are flipped for some reason.
+        if ((update.right_axis.x) / 128 >= 128) {
+            report.Report.bThumbRX = 255;
+        }
+        else if ((update.right_axis.x) / 128 <= -128) {
+            report.Report.bThumbRX = 0;
+        }
+        else {
+            report.Report.bThumbRX = (update.right_axis.x) / 128 + 128;
+        }
+        if ((update.right_axis.y) / 128 >= 128) {
+            report.Report.bThumbRY = 0;
+        }
+        else if ((update.right_axis.y) / 128 <= -128) {
+            report.Report.bThumbRY = 255;
+        }
+        else {
+            report.Report.bThumbRY = -((update.right_axis.y) / 128) + 128;
+        }
+        /*
+        report.Report.bThumbRX = ((update.right_axis.x) / 256 + 127);
+        report.Report.bThumbRY = (-(update.right_axis.y) / 256 + 127);
+        */
+        // Steam stores touchpad input on a signed 32bit integer, which must be converted to an unsigned byte. 
+        // Steam and PS4 y-axes are flipped for some reason.
         if (update.buttons & static_cast<int>(steam_controller::Button::RPAD)) report.Report.wButtons |= DS4_BUTTON_THUMB_RIGHT;
     }
     if ((update.buttons & static_cast<int>(steam_controller::Button::RG)) && !(update.buttons & static_cast<int>(steam_controller::Button::LG))) {
@@ -147,9 +166,13 @@ void ds4Update(steam_controller::update_event& update, const PVIGEM_CLIENT clien
 void tryOpening(steam_controller::context& context, steam_controller::connection_info const& info, const PVIGEM_CLIENT& client, const PVIGEM_TARGET& pad, DS4_REPORT_EX& report)
 {
 
-    auto controller = context.connect(info, 0, std::chrono::milliseconds(INFINITE));
+    auto controller = context.connect(info, 0, std::chrono::milliseconds(500));
     if (!controller)
         return;
+
+    system("cls");
+    std::cout << "Press ALT + ESC to exit the program.\n";
+    std::cout << "Controller connected\n";
 
     steam_controller::event event {};
 
@@ -159,7 +182,6 @@ void tryOpening(steam_controller::context& context, steam_controller::connection
             leave = true;
             break;
         }
-        auto state_before = controller->state();
 
         controller->poll(event);
 
@@ -177,12 +199,6 @@ void tryOpening(steam_controller::context& context, steam_controller::connection
             }
         }
 
-        if (state == steam_controller::connection_state::connected && state_before != steam_controller::connection_state::connected)
-        {
-            system("cls");
-            std::cout << "Press ALT + ESC to exit the program.\n";
-            std::cout << "Controller connected\n";
-        }
 
         if (event.key == steam_controller::event_key::UPDATE)
         {
@@ -282,14 +298,3 @@ int main()
     outputThread.join();
     return 0;
 }
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
